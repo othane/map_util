@@ -1,0 +1,2 @@
+This is a simple set of python classes used to analyse and diff map files.
+I made this to help find what is taking all the RAM and ROM space on embedded projects.
