@@ -353,7 +353,6 @@ class map_diff_t:
         return diff_symtbl
     
     def hbar_symtbl(self, obj, p = 1):
-        print obj
         # get a list of diffs between symbols in map_a and map_b for obj
         symtbl = self._diff_symtbl(self._map_a.get_symtbl(obj), self._map_b.get_symtbl(obj))
         # sort the list
