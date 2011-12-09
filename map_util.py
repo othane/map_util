@@ -72,7 +72,6 @@ class map_stats_t:
             self._rom_comptbl.append([rom, code, codata, rodata, rwdata, obj])
             
     def _find_section(self, pattern):
-        print 'finding section: ' + pattern
         while 1:
             line = self._mapf.readline()
             if string.find(line, pattern) != -1 or line == '':
