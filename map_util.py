@@ -182,7 +182,7 @@ class map_stats_t:
 class _diff_tbl:
            # handles showing a diff table
 
-        def __init__(self, diff_tbl, title = '', idx_size = 0, idx_name = -1, idx_type = None):
+        def __init__(self, diff_tbl, title = '', idx_size = 0, idx_name = -1, idx_type = None, on_obj_click = None):
             # ini class vars
             self._diff_tbl = diff_tbl
             self._title = title
@@ -192,14 +192,17 @@ class _diff_tbl:
             self._figman = None
             self._barh = None
             self._ax = None
-
+            self._difftbl_names = []
+            self._on_obj_click = on_obj_click
+        
         def __call__(self, event):
-            global gevent
-            gevent = event
             if event.name == 'pick_event':
+                # on pick event pop up a sorted symtbl for this obj
                 if event.mouseevent.inaxes != self._ax: return
-                # process the pick event
-                print "on pick"
+                i = int(event.mouseevent.ydata)
+                obj = self._difftbl_names[i]
+                if self._on_obj_click == None: return                
+                self._on_obj_click(obj)
             
         def plot(self, ax, p = 1):
             self._ax = ax
@@ -213,6 +216,7 @@ class _diff_tbl:
                 tot_size += abs(r[self._idx_size])
             # get p % of the list into names and sizes to plot
             cum_size = 0
+            self._difftbl_names = []
             for r in diff_sorted:
                 # accumulate size
                 s = r[self._idx_size]
@@ -224,6 +228,7 @@ class _diff_tbl:
                 name += r[self._idx_name] 
                 if self._idx_type != None: name += '(' + r[self._idx_type] + ')'
                 names.append(name)
+                self._difftbl_names.append(r[self._idx_name])
                 # if we have we done p % of the total size the goto ploting
                 if cum_size > tot_size * p:
                     break
@@ -320,13 +325,73 @@ class map_stats_diff_t:
                 # if we did not find b in a it is unique
                 self._rom_uniques.append([rom_b[0], 'u', rom_b[-1]])        
     
+    def _diff_symtbl(self, symtbl_a, symtbl_b):
+        diff_symtbl = []
+        # find a in b
+        for sym_a in symtbl_a:
+            found = False
+            for sym_b in symtbl_b:
+                if sym_a[0] == sym_b[0]:
+                    # names are the same so they match
+                    found = True
+                    size_diff = sym_b[3] - sym_a[3]
+                    if size_diff != 0:
+                        # sizes differ so add to diff list
+                        diff_symtbl.append([sym_a[0], 'd', size_diff])
+            if found == False:
+                # could not find a in b so a is unique
+                diff_symtbl.append([sym_a[0], 'u', sym_a[3]])
+        # find b in a
+        for sym_b in symtbl_b:
+            found = False
+            for sym_a in symtbl_a:
+                if sym_a[0] == sym_b[0]:
+                    # names are the same so these have already been found above
+                    found = True
+                    break
+            if found == False:
+                # could not find b in a so b is unique
+                diff_symtbl.append([sym_b[0], 'u', sym_b[3]])
+        return diff_symtbl
+    
+    def hbar_symtbl(self, obj, p = 1):
+        print obj
+        # get a list of diffs between symbols in map_stats_a and map_stats_b for obj
+        symtbl = self._diff_symtbl(self._map_stats_a.get_symtbl(obj), self._map_stats_b.get_symtbl(obj))
+        # sort the list
+        symtbl.sort(key = lambda l: abs(l[-1]), reverse=True)
+        # find out how much to plot
+        tot_size = 0;
+        for sym in symtbl:
+            tot_size += abs(sym[-1])
+        # get obj to plot
+        cum_size = 0
+        size = []
+        names = []
+        for sym in symtbl:
+            cum_size += abs(sym[-1])
+            size.append(abs(sym[-1]))
+            # format the name (a '*' indicates a negative value)
+            name = ''
+            if sym[-1] < 0: name += '*'
+            name += sym[0]
+            name += '(' + sym[1] + ')'
+            names.append(name)
+            if cum_size > tot_size * p: break
+        i = arange(len(size))
+        figure()        
+        barh(i, size)
+        title('symbol table for ' + obj)
+        xlabel('bytes')
+        yticks(i+0.2, names)       
+    
     def hbar_ram_diff(self, ax = None, p = 1):
         # just build one list of ram items that are unique or different sizes
         ram_diff_sorted = self._ram_diffs
         for unique in self._ram_uniques:
             ram_diff_sorted.append(unique)        
         # plot horizontal histogram
-        diff_tbl = _diff_tbl(ram_diff_sorted, title = 'RAM diff', idx_type = 1)
+        diff_tbl = _diff_tbl(ram_diff_sorted, title = 'RAM diff', idx_type = 1, on_obj_click = self.hbar_symtbl)
         diff_tbl.plot(ax, p)
     
     def hbar_rom_diff(self, p = 1, ax = None):
@@ -335,7 +400,7 @@ class map_stats_diff_t:
         for unique in self._rom_uniques:
             rom_diff_sorted.append(unique)        
         # plot horizontal histogram
-        diff_tbl = _diff_tbl(rom_diff_sorted, title = 'ROM diff', idx_type = 1)
+        diff_tbl = _diff_tbl(rom_diff_sorted, title = 'ROM diff', idx_type = 1, on_obj_click = self.hbar_symtbl)
         diff_tbl.plot(ax, p)
     
 
