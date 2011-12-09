@@ -207,7 +207,7 @@ class _diff_tbl:
         def plot(self, ax, p = 1):
             self._ax = ax
             # sort the diff by size so display in an ordered way
-            diff_sorted = sorted(self._diff_tbl, key = lambda l: abs(l[self._idx_size]), reverse=True)
+            diff_sorted = sorted(self._diff_tbl, key = lambda l: l[self._idx_size], reverse=True)
             size = []
             names = []
             # get the total size so we can display p % of it
@@ -359,7 +359,7 @@ class map_stats_diff_t:
         # get a list of diffs between symbols in map_stats_a and map_stats_b for obj
         symtbl = self._diff_symtbl(self._map_stats_a.get_symtbl(obj), self._map_stats_b.get_symtbl(obj))
         # sort the list
-        symtbl.sort(key = lambda l: abs(l[-1]), reverse=True)
+        symtbl.sort(key = lambda l: l[-1], reverse=True)
         # find out how much to plot
         tot_size = 0;
         for sym in symtbl:
