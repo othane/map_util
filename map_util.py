@@ -88,18 +88,19 @@ class map_stats_t:
         
     def sort_rom_comptbl(self):
         self._rom_comptbl.sort(key = lambda l: l[0], reverse=True)
-        
-    def dump_symtbl(self):
-        for sym_line in self._symtbl:
-            print sym_line
+
+    def get_symtbl(self, obj=None):
+        if obj == None:
+            return self._symtbl
+        else:
+            # search for all symbols with this obj
+            return [sym for sym in self._symtbl if sym[-1] == obj]
+                    
+    def get_ram_comptbl(self):
+        return self._ram_comptbl
             
-    def dump_ram_comptbl(self):
-        for rom in self._ram_comptbl:
-            print rom
-            
-    def dump_rom_comptbl(self):
-        for ram in self._ram_comptbl:
-            print ram
+    def get_rom_comptbl(self):
+        return self._rom_comptbl
             
     def hbar_ram(self, p = 1):
         # sort the ram here (perserve _ram_comptbl order so make new list)
