@@ -216,7 +216,7 @@ class map_stats_diff_t:
                     break
             if not found:
                 # if we did not find a in b it is unique                
-                self._ram_uniques.append([ram_a[0], 'u', ram_a[-1]])
+                self._ram_uniques.append([-ram_a[0], 'u', ram_a[-1]])
         # search for b in a
         for ram_b in self._map_stats_b._ram_comptbl:
             found = False
@@ -249,7 +249,7 @@ class map_stats_diff_t:
                     break
             if not found:
                 # if we did not find a in b it is unique                
-                self._rom_uniques.append([rom_a[0], 'u', rom_a[-1]])
+                self._rom_uniques.append([-rom_a[0], 'u', rom_a[-1]])
         # search for b in a
         for rom_b in self._map_stats_b._rom_comptbl:
             found = False
