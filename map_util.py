@@ -180,6 +180,64 @@ class map_stats_t:
         self._parse_comptbl()        
 
 
+class _diff_tbl:
+           # handles showing a diff table
+
+        def __init__(self, diff_tbl, title = '', idx_size = 0, idx_name = -1, idx_type = None):
+            # ini class vars
+            self._diff_tbl = diff_tbl
+            self._title = title
+            self._idx_size = idx_size
+            self._idx_name = idx_name
+            self._idx_type = idx_type
+            self._figman = None
+            self._barh = None
+            self._ax = None
+
+        def __call__(self, event):
+            global gevent
+            gevent = event
+            if event.name == 'pick_event':
+                if event.mouseevent.inaxes != self._ax: return
+                # process the pick event
+                print "on pick"
+            
+        def plot(self, ax, p = 1):
+            self._ax = ax
+            # sort the diff by size so display in an ordered way
+            diff_sorted = sorted(self._diff_tbl, key = lambda l: abs(l[self._idx_size]), reverse=True)
+            size = []
+            names = []
+            # get the total size so we can display p % of it
+            tot_size = 0
+            for r in diff_sorted:
+                tot_size += abs(r[self._idx_size])
+            # get p % of the list into names and sizes to plot
+            cum_size = 0
+            for r in diff_sorted:
+                # accumulate size
+                s = r[self._idx_size]
+                cum_size += abs(s)
+                size.append(abs(s))
+                # format the name (a '*' indicates a negative value)
+                name = ''
+                if s < 0: name += '*'
+                name += r[self._idx_name] 
+                if self._idx_type != None: name += '(' + r[self._idx_type] + ')'
+                names.append(name)
+                # if we have we done p % of the total size the goto ploting
+                if cum_size > tot_size * p:
+                    break
+            # plot the horizontal bar chart of all the sizes
+            self._figman = get_current_fig_manager()
+            i = arange(len(size))
+            self._barh = barh(i, size, picker=50)
+            title(self._title)
+            xlabel('delta (bytes)')
+            yticks(i+0.2, names)
+            self._figman.canvas.mpl_connect('pick_event', self)
+
+
 class map_stats_diff_t:
     # handles diffing two map_stats_t objs
     
@@ -262,67 +320,24 @@ class map_stats_diff_t:
             if not found:
                 # if we did not find b in a it is unique
                 self._rom_uniques.append([rom_b[0], 'u', rom_b[-1]])        
-        pass
     
-    def hbar_ram_diff(self, p = 1):
-        # just build one list of ram items that are unque or different sizes
+    def hbar_ram_diff(self, ax = None, p = 1):
+        # just build one list of ram items that are unique or different sizes
         ram_diff_sorted = self._ram_diffs
         for unique in self._ram_uniques:
             ram_diff_sorted.append(unique)        
-        # sort the ram list
-        ram_diff_sorted.sort(key = lambda l: abs(l[0]), reverse=True)
-        # build plotting arrays
-        ram = []
-        obj = []
-        size = 0
-        tot = 0
-        for r in ram_diff_sorted:
-            tot += abs(r[0])
-        for r in ram_diff_sorted:
-            size += abs(r[0])
-            ram.append(abs(r[0]))
-            sign = ' '
-            if r[0] < 0:
-                sign = '*'            
-            obj.append(sign + r[-1] + '(' + r[1] + ')')
-            if size > tot * p:
-                break
-        N = len(ram)
-        i = arange(N)
-        barh(i, ram[0:N])
-        title('RAM difference')
-        xlabel('delta RAM (bytes)')
-        yticks(i+0.2, obj[0:N])
+        # plot horizontal histogram
+        diff_tbl = _diff_tbl(ram_diff_sorted, title = 'RAM diff', idx_type = 1)
+        diff_tbl.plot(ax, p)
     
-    def hbar_rom_diff(self, p = 1):
-        # just build one list of rom items that are unque or different sizes
+    def hbar_rom_diff(self, p = 1, ax = None):
+        # just build one list of rom items that are unique or different sizes
         rom_diff_sorted = self._rom_diffs
         for unique in self._rom_uniques:
             rom_diff_sorted.append(unique)        
-        # sort the rom list
-        rom_diff_sorted.sort(key = lambda l: abs(l[0]), reverse=True)
-        # build plotting arrays
-        rom = []
-        obj = []
-        size = 0
-        tot = 0
-        for r in rom_diff_sorted:
-            tot += abs(r[0])
-        for r in rom_diff_sorted:
-            size += abs(r[0])
-            rom.append(abs(r[0]))
-            sign = ' '
-            if r[0] < 0:
-                sign = '*'
-            obj.append(sign + r[-1] + '(' + r[1] + ')')
-            if size > tot * p:
-                break
-        N = len(rom)
-        i = arange(N)
-        barh(i, rom[0:N])
-        title('ROM difference')
-        xlabel('delta ROM (bytes)')
-        yticks(i+0.2, obj[0:N]) 
+        # plot horizontal histogram
+        diff_tbl = _diff_tbl(rom_diff_sorted, title = 'ROM diff', idx_type = 1)
+        diff_tbl.plot(ax, p)
     
 
 # get map file to parse
@@ -344,11 +359,11 @@ map_stats2.hbar_rom(0.7)
 
 # show memory delta between versions
 map_stats_diff = map_stats_diff_t(map_stats1, map_stats2)
-figure()
-subplot(131)
-map_stats_diff.hbar_ram_diff()
-subplot(133)
-map_stats_diff.hbar_rom_diff(0.9)
+fig = figure()
+ax = fig.add_subplot(131)
+map_stats_diff.hbar_ram_diff(ax=ax)
+ax = fig.add_subplot(133)
+map_stats_diff.hbar_rom_diff(0.9, ax=ax)
 show()
 
 mapf1.close()
