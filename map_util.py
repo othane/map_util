@@ -11,8 +11,8 @@ import re
 from pylab import *
 
 
-class map_stats_t:
-    # simple analysis of map files    
+class map_t:
+    # simple class to model a map file
     
     def __init__(self, mapf = None):
         # init class vars
@@ -180,7 +180,7 @@ class map_stats_t:
 
 
 class _diff_tbl:
-           # handles showing a diff table
+        # handles showing a diff table
 
         def __init__(self, diff_tbl, title = '', idx_size = 0, idx_name = -1, idx_type = None, on_obj_click = None):
             # ini class vars
@@ -242,28 +242,26 @@ class _diff_tbl:
             self._figman.canvas.mpl_connect('pick_event', self)
 
 
-class map_stats_diff_t:
-    # handles diffing two map_stats_t objs
+class map_diff_t:
+    # handles diffing two map_t objs
     
-    def __init__(self, map_stats_a, map_stats_b):
+    def __init__(self, map_a, map_b):
         # ini class vars
-        self._map_stats_a = []
-        self._map_stats_b = []
         self._ram_diffs = []
         self._ram_uniques = []
         self._rom_diffs = []
         self._rom_uniques = []
         # load data
-        self._map_stats_a = map_stats_a
-        self._map_stats_b = map_stats_b
+        self._map_a = map_a
+        self._map_b = map_b
         self._ram_diff()        
         self._rom_diff()
         
     def _ram_diff(self):
         # search for a in b
-        for ram_a in self._map_stats_a._ram_comptbl:
+        for ram_a in self._map_a._ram_comptbl:
             found = False
-            for ram_b in self._map_stats_b._ram_comptbl:
+            for ram_b in self._map_b._ram_comptbl:
                 # if obj names are the same we found a in b
                 if ram_a[-1] == ram_b[-1]: 
                     found = True
@@ -280,9 +278,9 @@ class map_stats_diff_t:
                 # if we did not find a in b it is unique                
                 self._ram_uniques.append([-ram_a[0], 'u', ram_a[-1]])
         # search for b in a
-        for ram_b in self._map_stats_b._ram_comptbl:
+        for ram_b in self._map_b._ram_comptbl:
             found = False
-            for ram_a in self._map_stats_a._ram_comptbl:
+            for ram_a in self._map_a._ram_comptbl:
                 # if obj names are the same we found b in a
                 if ram_b[-1] == ram_a[-1]:
                     # we already found these above so skip b
@@ -294,9 +292,9 @@ class map_stats_diff_t:
     
     def _rom_diff(self):
         # search for a in b
-        for rom_a in self._map_stats_a._rom_comptbl:
+        for rom_a in self._map_a._rom_comptbl:
             found = False
-            for rom_b in self._map_stats_b._rom_comptbl:
+            for rom_b in self._map_b._rom_comptbl:
                 # if obj names are the same we found a in b
                 if rom_a[-1] == rom_b[-1]: 
                     found = True
@@ -313,9 +311,9 @@ class map_stats_diff_t:
                 # if we did not find a in b it is unique                
                 self._rom_uniques.append([-rom_a[0], 'u', rom_a[-1]])
         # search for b in a
-        for rom_b in self._map_stats_b._rom_comptbl:
+        for rom_b in self._map_b._rom_comptbl:
             found = False
-            for rom_a in self._map_stats_a._rom_comptbl:
+            for rom_a in self._map_a._rom_comptbl:
                 # if obj names are the same we found b in a
                 if rom_b[-1] == rom_a[-1]:
                     # we already found these above so skip b
@@ -356,8 +354,8 @@ class map_stats_diff_t:
     
     def hbar_symtbl(self, obj, p = 1):
         print obj
-        # get a list of diffs between symbols in map_stats_a and map_stats_b for obj
-        symtbl = self._diff_symtbl(self._map_stats_a.get_symtbl(obj), self._map_stats_b.get_symtbl(obj))
+        # get a list of diffs between symbols in map_a and map_b for obj
+        symtbl = self._diff_symtbl(self._map_a.get_symtbl(obj), self._map_b.get_symtbl(obj))
         # sort the list
         symtbl.sort(key = lambda l: l[-1], reverse=True)
         # find out how much to plot
@@ -411,23 +409,23 @@ class map_stats_diff_t:
 
 filename1 = u'C:/NW/holly_build/dolly/dolly_productbrd_ssp.map'
 filename2 = u'C:/NW/holly_nitro/dolly/dolly_productbrd_ssp.map'
-mapf1 = open(filename1); map_stats1 = map_stats_t(mapf1)
-mapf2 = open(filename2); map_stats2 = map_stats_t(mapf2)
+mapf1 = open(filename1); map1 = map_t(mapf1)
+mapf2 = open(filename2); map2 = map_t(mapf2)
 
 # show rom consumption for both version
 figure()
 subplot(131)
-map_stats1.hbar_rom(0.7)
+map1.hbar_rom(0.7)
 subplot(133)
-map_stats2.hbar_rom(0.7)
+map2.hbar_rom(0.7)
 
 # show memory delta between versions
-map_stats_diff = map_stats_diff_t(map_stats1, map_stats2)
+map_diff = map_diff_t(map1, map2)
 fig = figure()
 ax = fig.add_subplot(131)
-map_stats_diff.hbar_ram_diff(ax=ax)
+map_diff.hbar_ram_diff(ax=ax)
 ax = fig.add_subplot(133)
-map_stats_diff.hbar_rom_diff(0.9, ax=ax)
+map_diff.hbar_rom_diff(0.9, ax=ax)
 show()
 
 mapf1.close()
