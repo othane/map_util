@@ -400,32 +400,40 @@ class map_diff_t:
         diff_tbl = _diff_tbl(rom_diff_sorted, title = 'ROM diff', idx_type = 1, on_obj_click = self.hbar_symtbl)
         diff_tbl.plot(ax, p)
     
+def anaylze():
+    # get map file to parse
+    filename = askopenfilename(title='load map file', filetypes = [('all', '.*'), ('map', '.map')])
+    if filename:
+        map = map_t(open(filename))
+        # show rom and ram consumption 
+        figure()
+        subplot(131)
+        map.hbar_rom(0.7)
+        subplot(133)
+        map.hbar_ram(0.7)
+        show()
 
-# get map file to parse
-#filename = askopenfilename(title='load map file', filetypes = [('map', '.map'), ('all', '.*')])
-#if filename == '':
-#    quit()
+def compare():
+    # get map files to parse
+    filename1 = askopenfilename(title='load map file 1', filetypes = [('all', '.*'), ('map', '.map')])
+    filename2 = askopenfilename(title='load map file 2', filetypes = [('all', '.*'), ('map', '.map')])
+    if filename1 and filename2:
+        map1 = map_t(open(filename1))
+        map2 = map_t(open(filename2))
+        # show memory delta between versions
+        map_diff = map_diff_t(map1, map2)
+        fig = figure()
+        ax = fig.add_subplot(131)
+        map_diff.hbar_ram_diff(ax=ax)
+        ax = fig.add_subplot(133)
+        map_diff.hbar_rom_diff(0.9, ax=ax)
+        show()
 
-filename1 = u'C:/NW/holly_build/dolly/dolly_productbrd_ssp.map'
-filename2 = u'C:/NW/holly_nitro/dolly/dolly_productbrd_ssp.map'
-mapf1 = open(filename1); map1 = map_t(mapf1)
-mapf2 = open(filename2); map2 = map_t(mapf2)
-
-# show rom consumption for both version
-figure()
-subplot(131)
-map1.hbar_rom(0.7)
-subplot(133)
-map2.hbar_rom(0.7)
-
-# show memory delta between versions
-map_diff = map_diff_t(map1, map2)
-fig = figure()
-ax = fig.add_subplot(131)
-map_diff.hbar_ram_diff(ax=ax)
-ax = fig.add_subplot(133)
-map_diff.hbar_rom_diff(0.9, ax=ax)
-show()
-
-mapf1.close()
-mapf2.close()
+import Tkinter
+top = Tkinter.Tk()
+top.title("Choose an option..")
+button = Tkinter.Button(top, text="Analyze single map file", command=anaylze)
+button.pack()
+button = Tkinter.Button(top, text="Compare map files", command=compare)
+button.pack()
+Tkinter.mainloop()
